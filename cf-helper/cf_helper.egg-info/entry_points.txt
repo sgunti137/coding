@@ -1,0 +1,5 @@
+[console_scripts]
+addtest = cfhelper.addtest:main
+cf = cfhelper.cli:cli
+run = cfhelper.run:main
+start = cfhelper.start:main

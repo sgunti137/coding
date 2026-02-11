@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(g++:*)",
+      "WebSearch",
+      "WebFetch(domain:codeforces.com)",
+      "Bash(pip install:*)",
+      "Bash(start 1973)",
+      "Bash(run A)",
+      "Bash(run A:*)",
+      "Bash(ls:*)",
+      "Bash(for cmd in start run addtest)",
+      "Bash(done)",
+      "Bash(start --help:*)",
+      "Bash(run --help:*)",
+      "Bash(addtest --help:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(cd:*)",
+      "Bash(cf --help:*)",
+      "Bash(cf contest --help:*)",
+      "Bash(cf contest listen --help:*)"
+    ]
+  }
+}
