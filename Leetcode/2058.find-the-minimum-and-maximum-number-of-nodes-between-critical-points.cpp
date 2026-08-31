@@ -26,15 +26,20 @@ public:
       a[0] = a[1];
       a[1] = a[2];
       a[2] = val;
-      if (a[1] > a[0] && a[1] > val) {
+      if (a[0] != -1 && (a[1] > a[0] && a[1] > val) ||
+          (a[1] < a[0] && a[1] < val)) {
         ids.push_back(id);
-        ma = max(ma, ids.back() - ids[0]);
+        if (ids.size() > 1)
+          ma = max(ma, ids.back() - ids[0]);
         if (ids.size() > 1)
           mi = min(mi, ids.back() - ids[ids.size() - 2]);
       }
       id++;
+      head = head->next;
     }
 
+    if (ma == INT_MIN)
+      return {-1, -1};
     return {mi, ma};
   }
 };
