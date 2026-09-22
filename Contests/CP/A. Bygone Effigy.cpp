@@ -83,8 +83,6 @@ int main() {
 	sort(attack.begin(), attack.end());
 	sort(def.begin(), def.end());
 
-	debug() << imie(attack);
-	debug() << imie(def);
 	vector<int> ans;
 	for (int i = 0; i < def_needed; ++i) {
 		ans.push_back(def[def.size() - i - 1].second);
