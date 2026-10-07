@@ -1,6 +1,7 @@
 // @leet imports start
 #include <bits/stdc++.h>
 #include <unordered_map>
+#include <vector>
 using namespace std;
 // @leet imports end
 
@@ -8,22 +9,20 @@ using namespace std;
 class Solution {
 public:
     int longestConsecutive(vector<int>& nums) {
-		map<int, int> mp;
+		unordered_set<int> mp;
 
-		for (auto& x: nums) mp[x] = 1;
+		for (int i = 0; i < nums.size(); ++i) {
+			mp.insert(nums[i]);
+		}
 
-		int ans = 0, res = 0, last = INT_MIN;
+		int ans = 0;
 		for (auto& x: mp) {
-			if (last == -1) {
-				res = 1;
-			} else if (last + 1 == x.first) {
+			if (mp.count(x - 1) > 0) continue;
+			int t = x, res = 0;
+			while (mp.count(t) > 0) {
+				t++;
 				res++;
-				ans = max(ans, res);
-			} else {
-				res = 1;
 			}
-
-			last = x.first;
 			ans = max(ans, res);
 		}
 
