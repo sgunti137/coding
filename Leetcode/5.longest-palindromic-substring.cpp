@@ -8,19 +8,33 @@ class Solution {
 public:
     string longestPalindrome(string s) {
         int n = s.size();
-		int st = -1, len = 0;
+		int st = 0, len = 1;
 
 		for (int i = 0; i < n; ++i) {
-			for (int j = i; j < n; ++j) {
-				bool ok = 1;
-				for (int k = i; k <= j; k++) {
-					if (s[k] != s[j - i + 1 + k - 1]) {
-						ok = 0;
+			int l = i - 1, r = i + 1, cur = 1;
+			while (l >= 0 && r < n) {
+				if (s[l] == s[r]) {
+					cur += 2;
+					if (cur > len) {
+						len = cur;
+						st = l;
 					}
-				}
-				if (ok && j - i + 1 > len) {
-					st = i; len = j - i + 1;
-				}
+					l--;
+					r++;
+				} else break;
+			}
+
+			l = i; r = i + 1; cur = 0;
+			while (l >= 0 && r < n) {
+				if (s[l] == s[r]) {
+					cur += 2;
+					if (cur > len) {
+						len = cur;
+						st = l;
+					}
+					l--;
+					r++;
+				} else break;
 			}
 		}
 
