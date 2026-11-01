@@ -1,0 +1,19 @@
+{
+  "id": "213",
+  "question_id": "213",
+  "slug": "house-robber-ii",
+  "title": "House Robber II",
+  "meta": {
+    "name": "rob",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    },
+    "manual": false
+  }
+}
