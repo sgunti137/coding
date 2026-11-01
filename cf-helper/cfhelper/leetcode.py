@@ -184,8 +184,18 @@ def run(debug):
             r = subprocess.run([str(binary)], input=inp.read_text(), capture_output=True, text=True,
                                timeout=timeout, cwd=folder)
             ms = (time.time() - t0) * 1000
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
             print_error(f'Test {n}: TIMEOUT ✗ (>{timeout}s)')
+            print(f'  Input:\n    ' + inp.read_text().strip().replace('\n', '\n    '))
+            for label, data in (('Output', e.stdout), ('Debug output (last 40 lines)', e.stderr)):
+                if isinstance(data, bytes):
+                    data = data.decode(errors='replace')
+                if data and data.strip():
+                    print(f'  {label} before timeout:')
+                    for line in data.strip().split('\n')[-40:]:
+                        print(f'    {line}')
+            if not (e.stderr and e.stderr.strip()):
+                print('  (No debug output. Add cerr << ... prints to see where it gets stuck.)')
             failed += 1
             continue
 

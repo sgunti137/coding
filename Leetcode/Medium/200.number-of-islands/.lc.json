@@ -1,0 +1,19 @@
+{
+  "id": "200",
+  "question_id": "200",
+  "slug": "number-of-islands",
+  "title": "Number of Islands",
+  "meta": {
+    "name": "numIslands",
+    "params": [
+      {
+        "name": "grid",
+        "type": "character[][]"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    },
+    "manual": true
+  }
+}
