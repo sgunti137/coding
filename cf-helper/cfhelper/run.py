@@ -4,6 +4,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
+from glob import escape as glob_escape
 import click
 
 from .config import load_config
@@ -22,6 +23,8 @@ def main(problem, contest, debug):
 
     config = load_config()
     cwd = Path.cwd()
+
+    flat_sol = None
 
     # Determine problem directory
     if problem is None:
@@ -48,9 +51,14 @@ def main(problem, contest, debug):
             # Check if current directory has problem folders (A/, B/, C/, etc.)
             potential_problem_dir = cwd / problem_upper
 
+            flat_matches = sorted(cwd.glob(f'{problem_upper} - *.cpp')) or sorted(cwd.glob(f'{problem_upper}.cpp'))
             if potential_problem_dir.exists() and (potential_problem_dir / 'sol.cpp').exists():
                 # We're in a contest directory!
                 problem_dir = potential_problem_dir
+            elif flat_matches:
+                # Flat CPH layout: "A - Name.cpp" with "A - Name_input0.txt" / "_output0.txt"
+                flat_sol = flat_matches[0]
+                problem_dir = cwd
             else:
                 # Fall back to active contest
                 contest = config.get('active_contest')
@@ -70,7 +78,7 @@ def main(problem, contest, debug):
         print_error(f"Problem directory not found: {problem_dir}")
         exit(1)
 
-    sol_cpp = problem_dir / 'sol.cpp'
+    sol_cpp = flat_sol if flat_sol else problem_dir / 'sol.cpp'
     if not sol_cpp.exists():
         print_error(f"Solution file not found: {sol_cpp}")
         exit(1)
@@ -79,11 +87,12 @@ def main(problem, contest, debug):
     if problem is None:
         print(f"\033[96mCompiling sol.cpp...\033[0m", end=' ', flush=True)
     else:
-        print(f"\033[96mCompiling {problem.upper()}/sol.cpp...\033[0m", end=' ', flush=True)
+        label = sol_cpp.name if flat_sol else f"{problem.upper()}/sol.cpp"
+        print(f"\033[96mCompiling {label}...\033[0m", end=' ', flush=True)
 
     compiler = config.get('compiler', 'g++')
     compile_flags = config.get('compile_flags', ['-std=c++17', '-O2', '-Wall'])
-    output_binary = problem_dir / 'sol'
+    output_binary = problem_dir / (sol_cpp.stem if flat_sol else 'sol')
 
     compile_cmd = [compiler] + compile_flags + [str(sol_cpp), '-o', str(output_binary)]
 
@@ -108,8 +117,19 @@ def main(problem, contest, debug):
         exit(1)
 
     # Find test cases
-    test_files = sorted(problem_dir.glob('in*.txt'))
-    if not test_files:
+    tests = []  # (test_num, input_path, output_path)
+    if flat_sol:
+        prefix = f'{sol_cpp.stem}_input'
+        for f in problem_dir.glob(f'{glob_escape(prefix)}*.txt'):
+            num = f.stem[len(prefix):]
+            if num.isdigit():
+                tests.append((num, f, problem_dir / f'{sol_cpp.stem}_output{num}.txt'))
+    else:
+        for f in problem_dir.glob('in*.txt'):
+            num = f.stem[2:]
+            tests.append((num, f, problem_dir / f'out{num}.txt'))
+    tests.sort(key=lambda t: int(t[0]) if t[0].isdigit() else t[0])
+    if not tests:
         print_warning("No test cases found")
         exit(0)
 
@@ -125,10 +145,7 @@ def main(problem, contest, debug):
     timeout_limit = config.get('timeout', 2.0)
     test_times = []  # Store (test_num, time_taken, status)
 
-    for input_file in test_files:
-        # Determine test number from filename (in1.txt -> 1)
-        test_num = input_file.stem[2:]  # Remove 'in' prefix
-        output_file = problem_dir / f'out{test_num}.txt'
+    for test_num, input_file, output_file in tests:
 
         if not output_file.exists():
             print_warning(f"Test {test_num}: No expected output file")
