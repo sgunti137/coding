@@ -67,3 +67,29 @@ Thumbs.db
 # IDE runtime/cache
 .cache/
 *.sublime-workspace
+
+# lc run build files
+.harness.cpp
+.sol
+
+# Build output and tool files
+__pycache__/
+*.pyc
+*.egg-info/
+.cph/
+*.bin
+*.exe
+*.out
+sol
+# CPH binaries have no extension: in these folders keep only code and tests
+AtcoderDpContest/**/*
+!AtcoderDpContest/**/
+!AtcoderDpContest/**/*.cpp
+!AtcoderDpContest/**/*.txt
+Contests/**/*
+!Contests/**/
+!Contests/**/*.cpp
+!Contests/**/*.py
+!Contests/**/*.txt
+!Contests/**/*.md
+Data Structures and Algorithms/a

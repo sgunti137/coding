@@ -1,0 +1,18 @@
+{
+  "id": "7",
+  "question_id": "7",
+  "slug": "reverse-integer",
+  "title": "Reverse Integer",
+  "meta": {
+    "name": "reverse",
+    "params": [
+      {
+        "name": "x",
+        "type": "integer"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    }
+  }
+}

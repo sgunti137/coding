@@ -19,6 +19,7 @@ setup(
             'start=cfhelper.start:main',
             'run=cfhelper.run:main',
             'addtest=cfhelper.addtest:main',
+            'lc=cfhelper.leetcode:cli',
         ],
     },
     python_requires='>=3.7',

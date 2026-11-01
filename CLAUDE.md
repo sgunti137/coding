@@ -281,3 +281,23 @@ Check compiler configuration in `~/.cfhelper/config.yaml`. Default uses g++ with
 
 ### Test Case Mismatches
 The test runner normalizes trailing whitespace and line endings. Ensure output format matches expected output exactly.
+
+## LeetCode Helper (`lc`)
+
+Part of cf-helper (`cfhelper/leetcode.py`, C++ runtime in `cfhelper/lc_runtime.h`).
+
+```bash
+lc get 994               # number, slug, or URL -> Leetcode/<Difficulty>/994.rotting-oranges/
+cd Leetcode/Medium/994.rotting-oranges
+lc run                   # compile sol.cpp, run examples (in1.txt/out1.txt, ...)
+lc run -d                # also show stderr debug prints
+lc add                   # add a custom test case
+lc login                 # once: paste LEETCODE_SESSION + csrftoken cookies (saved to ~/.cfhelper/leetcode.json)
+lc submit                # submit sol.cpp, show verdict; offers to save the failing case as a test
+```
+
+- VS Code tasks `LC: Run` / `LC: Submit` (.vscode/tasks.json) run in the open file's folder.
+- `sol.cpp` holds only `class Solution` (paste-able into LeetCode); no `main` needed.
+- Inputs use LeetCode format, one argument per line. Supports ints, doubles, bools, strings, chars, nested vectors, `ListNode*`, `TreeNode*`. Void methods print the modified first argument.
+- `ListNode`/`TreeNode` are defined by the runtime - keep them commented in sol.cpp.
+- Not supported: design problems (multiple methods), "any order" answers (compare by eye).
