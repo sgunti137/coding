@@ -40,11 +40,16 @@ using namespace std;
 
 def gql(query, variables=None):
     body = json.dumps({'query': query, 'variables': variables or {}}).encode()
-    req = urllib.request.Request(GRAPHQL, data=body, headers={
+    headers = {
         'Content-Type': 'application/json',
         'Referer': 'https://leetcode.com',
         'User-Agent': 'Mozilla/5.0',
-    })
+    }
+    if AUTH_FILE.exists():  # logged in: needed for Premium problems
+        auth = json.loads(AUTH_FILE.read_text())
+        headers['Cookie'] = f"LEETCODE_SESSION={auth['session']}; csrftoken={auth['csrftoken']}"
+        headers['X-CSRFToken'] = auth['csrftoken']
+    req = urllib.request.Request(GRAPHQL, data=body, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.load(r)['data']
 
@@ -86,11 +91,17 @@ def cli():
 def get(problem):
     """Set up a problem. PROBLEM is a number (994), slug (rotting-oranges) or URL."""
     slug = resolve_slug(problem)
-    q = gql('query q($s:String!){question(titleSlug:$s){questionId questionFrontendId title titleSlug difficulty '
+    q = gql('query q($s:String!){question(titleSlug:$s){questionId questionFrontendId title titleSlug difficulty isPaidOnly '
             'exampleTestcases metaData content codeSnippets{langSlug code}}}', {'s': slug})['question']
     if not q:
         raise click.ClickException(f'Problem not found: {slug}')
 
+    if not q['metaData']:
+        if q.get('isPaidOnly'):
+            hint = ('Your saved login may have expired: run `lc login` again.' if AUTH_FILE.exists()
+                    else 'Run `lc login` with a Premium account first.')
+            raise click.ClickException(f"{q['questionFrontendId']}. {q['title']} is a Premium problem. {hint}")
+        raise click.ClickException('LeetCode returned no code for this problem.')
     meta = json.loads(q['metaData'])
     folder = leetcode_dir() / q['difficulty'] / f"{q['questionFrontendId']}.{q['titleSlug']}"
     folder.mkdir(parents=True, exist_ok=True)
