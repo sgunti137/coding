@@ -1,0 +1,18 @@
+{
+  "id": "268",
+  "question_id": "268",
+  "slug": "missing-number",
+  "title": "Missing Number",
+  "meta": {
+    "name": "missingNumber",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    }
+  }
+}
