@@ -1,0 +1,18 @@
+{
+  "id": "647",
+  "question_id": "647",
+  "slug": "palindromic-substrings",
+  "title": "Palindromic Substrings",
+  "meta": {
+    "name": "countSubstrings",
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    }
+  }
+}
