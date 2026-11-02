@@ -1,0 +1,18 @@
+{
+  "id": "128",
+  "question_id": "128",
+  "slug": "longest-consecutive-sequence",
+  "title": "Longest Consecutive Sequence",
+  "meta": {
+    "name": "longestConsecutive",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    }
+  }
+}
