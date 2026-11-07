@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 from .config import load_config, save_config, is_first_run, prompt_first_time_setup
-from .utils import print_success, print_error, print_info, print_warning
+from .sites import Codeforces, config_for
+from .utils import print_success, print_error, print_info, print_warning, request_cd, open_in_editor
 
 
 class CompetitiveCompanionHandler(BaseHTTPRequestHandler):
@@ -17,6 +18,10 @@ class CompetitiveCompanionHandler(BaseHTTPRequestHandler):
 
     # Track contest info across requests
     contest_id = None
+    site = Codeforces
+    auto = False         # `cf get`: decide contest vs single problem from the batch size
+    batch_size = None    # how many problems Competitive Companion said it is sending
+    single_dir = None    # set when a single problem was received in auto mode
     problems_received = []
     last_received_time = None
     server_instance = None
@@ -50,26 +55,6 @@ class CompetitiveCompanionHandler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.end_headers()
 
-    def extract_contest_and_problem(self, url: str) -> Optional[Tuple[int, str]]:
-        """Extract contest ID and problem letter from URL
-
-        Examples:
-            https://codeforces.com/contest/1974/problem/A -> (1974, 'A')
-            https://codeforces.com/contest/1974/problem/F1 -> (1974, 'F1')
-            https://codeforces.com/problemset/problem/1974/A -> (1974, 'A')
-        """
-        # Try contest URL format (matches A, B, F1, F2, etc.)
-        match = re.search(r'/contest/(\d+)/problem/([A-Z]\d*)', url)
-        if match:
-            return (int(match.group(1)), match.group(2))
-
-        # Try problemset URL format (matches A, B, F1, F2, etc.)
-        match = re.search(r'/problemset/problem/(\d+)/([A-Z]\d*)', url)
-        if match:
-            return (int(match.group(1)), match.group(2))
-
-        return None
-
     def process_problem(self, data: dict) -> bool:
         """Process a single problem from Competitive Companion"""
         # Extract info from JSON
@@ -78,17 +63,23 @@ class CompetitiveCompanionHandler(BaseHTTPRequestHandler):
         tests = data.get('tests', [])
 
         # Parse contest and problem
-        parsed = self.extract_contest_and_problem(url)
+        parsed = self.site.parse(url)
         if not parsed:
             print_error(f"Could not parse URL: {url}")
             return False
 
-        contest_id, problem_letter = parsed
+        contest_id, problem_letter, task_id = parsed
+
+        # A problem page sends a batch of 1; a contest page sends all its problems
+        size = (data.get('batch') or {}).get('size')
+        CompetitiveCompanionHandler.batch_size = size
+        single = self.auto and size == 1
 
         # Track contest ID (set on first problem)
         if CompetitiveCompanionHandler.contest_id is None:
             CompetitiveCompanionHandler.contest_id = contest_id
-            print_info(f"\nReceiving contest {contest_id}...")
+            if not single:
+                print_info(f"\nReceiving contest {contest_id}...")
 
         # Verify all problems are from same contest
         if contest_id != CompetitiveCompanionHandler.contest_id:
@@ -97,21 +88,17 @@ class CompetitiveCompanionHandler(BaseHTTPRequestHandler):
 
         # Load config
         config = load_config()
-        template_path = config['template_path']
-        base_dir = config['base_dir']
+        template_path = self.site.template(config)
 
         # Validate paths
         if not Path(template_path).exists():
             print_error(f"Template file not found: {template_path}")
             return False
 
-        if not Path(base_dir).exists():
-            print_error(f"Base directory not found: {base_dir}")
-            return False
-
         # Create problem directory
-        contest_dir = Path(base_dir) / str(contest_id)
-        problem_dir = contest_dir / problem_letter
+        problem_dir = self.site.problem_dir(config, contest_id, problem_letter, single=single)
+        if single:
+            CompetitiveCompanionHandler.single_dir = problem_dir
         problem_dir.mkdir(parents=True, exist_ok=True)
 
         # Copy template to sol.cpp
@@ -136,6 +123,8 @@ class CompetitiveCompanionHandler(BaseHTTPRequestHandler):
                 if not output_text.endswith('\n'):
                     f.write('\n')
 
+        self.site.save_meta(problem_dir, contest_id, task_id, url)
+
         # Track received problems
         CompetitiveCompanionHandler.problems_received.append(problem_letter)
         CompetitiveCompanionHandler.last_received_time = time.time()
@@ -159,46 +148,54 @@ def print_summary(config):
     """Print completion summary"""
     print()
     print("=" * 60)
-    if CompetitiveCompanionHandler.problems_received:
+    if CompetitiveCompanionHandler.single_dir:
+        problem_dir = CompetitiveCompanionHandler.single_dir
+        print_success("\nProblem setup complete!")
+        print_info(f"Directory: {problem_dir}")
+        print()
+        print_warning("Next: run")
+        request_cd(problem_dir)
+        open_in_editor(problem_dir, [problem_dir / 'sol.cpp'])
+    elif CompetitiveCompanionHandler.problems_received:
         contest_id = CompetitiveCompanionHandler.contest_id
         problems = ', '.join(CompetitiveCompanionHandler.problems_received)
-        contest_dir = Path(config['base_dir']) / str(contest_id)
+        contest_dir = CompetitiveCompanionHandler.site.root(config) / contest_id
 
         print_success(f"\nContest {contest_id} setup complete!")
         print_info(f"Problems received: {problems}")
         print_info(f"Directory: {contest_dir}")
         print()
-        print_warning("Next steps:")
-        print(f"  cd {contest_dir}")
-        print(f"  run A")
+        print_warning("Next: run A")
+        request_cd(contest_dir)
+        sols = sorted(contest_dir.glob('*/sol.cpp'))
+        open_in_editor(contest_dir, sols)
     else:
         print_warning("\nNo problems received.")
     print("=" * 60)
 
 
-def main():
+def main(site=Codeforces, auto=False):
     """Start HTTP server to listen for Competitive Companion"""
     # First-time setup if needed
     if is_first_run():
         prompt_first_time_setup()
 
-    config = load_config()
+    config = config_for(site)
 
     # Validate config
-    if not Path(config['template_path']).exists():
-        print_error(f"Template file not found: {config['template_path']}")
-        print_error("Please update your config at ~/.cfhelper/config.yaml")
-        return
-
-    if not Path(config['base_dir']).exists():
-        print_error(f"Base directory not found: {config['base_dir']}")
+    if not Path(site.template(config)).exists():
+        print_error(f"Template file not found: {site.template(config)}")
         print_error("Please update your config at ~/.cfhelper/config.yaml")
         return
 
     # Reset state
+    CompetitiveCompanionHandler.site = site
     CompetitiveCompanionHandler.contest_id = None
     CompetitiveCompanionHandler.problems_received = []
     CompetitiveCompanionHandler.last_received_time = None
+    CompetitiveCompanionHandler.auto = auto
+    CompetitiveCompanionHandler.batch_size = None
+    CompetitiveCompanionHandler.single_dir = None
 
     # Start server
     port = 10043  # Default Competitive Companion port
@@ -211,7 +208,7 @@ def main():
     print_info("Waiting for problems from Competitive Companion...")
     print()
     print_warning("Instructions:")
-    print("  1. Go to Codeforces contest page in your browser")
+    print(f"  1. Go to a {site.name} contest page in your browser")
     print("  2. Click the Competitive Companion extension icon")
     print("  3. Problems will be automatically set up")
     print()
@@ -232,6 +229,11 @@ def main():
             server.handle_request()
 
             # Check if we should stop due to timeout
+            # Stop as soon as the whole batch has arrived
+            size = CompetitiveCompanionHandler.batch_size
+            if size and len(CompetitiveCompanionHandler.problems_received) >= size:
+                break
+
             if should_stop(timeout_seconds):
                 print()
                 print_info(f"No new problems for {timeout_seconds} seconds. Auto-stopping...")

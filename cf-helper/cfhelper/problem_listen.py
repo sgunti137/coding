@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 from .config import load_config, is_first_run, prompt_first_time_setup
-from .utils import print_success, print_error, print_info, print_warning
+from .sites import Codeforces, config_for
+from .utils import print_success, print_error, print_info, print_warning, request_cd, open_in_editor
 
 
 class ProblemCompanionHandler(BaseHTTPRequestHandler):
@@ -17,6 +18,7 @@ class ProblemCompanionHandler(BaseHTTPRequestHandler):
 
     # Track problem info
     problem_dir = None
+    site = Codeforces
     problem_received = False
     last_received_time = None
     server_instance = None
@@ -50,25 +52,6 @@ class ProblemCompanionHandler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.end_headers()
 
-    def extract_contest_and_problem(self, url: str) -> Optional[Tuple[int, str]]:
-        """Extract contest ID and problem letter from URL
-
-        Examples:
-            https://codeforces.com/contest/1974/problem/A -> (1974, 'A')
-            https://codeforces.com/problemset/problem/2194/B -> (2194, 'B')
-        """
-        # Try contest URL format
-        match = re.search(r'/contest/(\d+)/problem/([A-Z]\d*)', url)
-        if match:
-            return (int(match.group(1)), match.group(2))
-
-        # Try problemset URL format
-        match = re.search(r'/problemset/problem/(\d+)/([A-Z]\d*)', url)
-        if match:
-            return (int(match.group(1)), match.group(2))
-
-        return None
-
     def process_problem(self, data: dict) -> bool:
         """Process a single problem from Competitive Companion"""
         # Extract info from JSON
@@ -77,30 +60,25 @@ class ProblemCompanionHandler(BaseHTTPRequestHandler):
         tests = data.get('tests', [])
 
         # Parse contest and problem
-        parsed = self.extract_contest_and_problem(url)
+        parsed = self.site.parse(url)
         if not parsed:
             print_error(f"Could not parse URL: {url}")
             return False
 
-        contest_id, problem_letter = parsed
+        contest_id, problem_letter, task_id = parsed
 
         # Load config
         config = load_config()
-        template_path = config['template_path']
-        base_dir = config['base_dir']
+        template_path = self.site.template(config)
 
         # Validate paths
         if not Path(template_path).exists():
             print_error(f"Template file not found: {template_path}")
             return False
 
-        if not Path(base_dir).exists():
-            print_error(f"Base directory not found: {base_dir}")
-            return False
-
         # Create problem directory with name format: <contest_id><problem>
         problem_folder_name = f"{contest_id}{problem_letter}"
-        problem_dir = Path(base_dir) / problem_folder_name
+        problem_dir = self.site.problem_dir(config, contest_id, problem_letter, single=True)
         problem_dir.mkdir(parents=True, exist_ok=True)
 
         # Copy template to sol.cpp
@@ -124,6 +102,8 @@ class ProblemCompanionHandler(BaseHTTPRequestHandler):
                 f.write(output_text)
                 if not output_text.endswith('\n'):
                     f.write('\n')
+
+        self.site.save_meta(problem_dir, contest_id, task_id, url)
 
         # Track received problem
         ProblemCompanionHandler.problem_dir = problem_dir
@@ -158,34 +138,30 @@ def print_summary(config):
         print_success("\nProblem setup complete!")
         print_info(f"Directory: {problem_dir}")
         print()
-        print_warning("Next steps:")
-        print(f"  cd {problem_dir}")
-        print(f"  run")
+        print_warning("Next: run")
+        request_cd(problem_dir)
+        open_in_editor(problem_dir, [Path(problem_dir) / 'sol.cpp'])
     else:
         print_warning("\nNo problem received.")
     print("=" * 60)
 
 
-def main():
+def main(site=Codeforces):
     """Start HTTP server to listen for single problem from Competitive Companion"""
     # First-time setup if needed
     if is_first_run():
         prompt_first_time_setup()
 
-    config = load_config()
+    config = config_for(site)
 
     # Validate config
-    if not Path(config['template_path']).exists():
-        print_error(f"Template file not found: {config['template_path']}")
-        print_error("Please update your config at ~/.cfhelper/config.yaml")
-        return
-
-    if not Path(config['base_dir']).exists():
-        print_error(f"Base directory not found: {config['base_dir']}")
+    if not Path(site.template(config)).exists():
+        print_error(f"Template file not found: {site.template(config)}")
         print_error("Please update your config at ~/.cfhelper/config.yaml")
         return
 
     # Reset state
+    ProblemCompanionHandler.site = site
     ProblemCompanionHandler.problem_dir = None
     ProblemCompanionHandler.problem_received = False
     ProblemCompanionHandler.last_received_time = None
@@ -201,7 +177,7 @@ def main():
     print_info("Waiting for a problem from Competitive Companion...")
     print()
     print_warning("Instructions:")
-    print("  1. Go to a Codeforces problem page in your browser")
+    print(f"  1. Go to a {site.name} problem page in your browser")
     print("  2. Click the Competitive Companion extension icon")
     print("  3. Problem will be automatically set up and listener will stop")
     print()

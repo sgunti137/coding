@@ -1,0 +1,18 @@
+{
+  "id": "20",
+  "question_id": "20",
+  "slug": "valid-parentheses",
+  "title": "Valid Parentheses",
+  "meta": {
+    "name": "isValid",
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "return": {
+      "type": "boolean"
+    }
+  }
+}

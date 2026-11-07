@@ -9,7 +9,9 @@ This is a competitive programming workspace containing:
 - **Contests/**: Active Codeforces contest problems
 - **Leetcode/**: LeetCode problems organized by difficulty (Easy/Medium/Hard)
 - **AdventOfCode/**: Advent of Code solutions
-- **Algorithms/**: Algorithm implementations
+- **Atcoder/**: AtCoder problems made by `ac`
+- **AtcoderDpContest/**: AtCoder Educational DP Contest solutions
+- **Python/**: Python practice files
 - **Data Structures and Algorithms/**: DSA implementations
 - **Threads/**: Multithreading examples
 
@@ -127,6 +129,32 @@ run B -d                  # Test B with debug output
 - **Override with `-c` flag:** Run from anywhere using `run A -c 1974` or `addtest A -c 1974`
 - **Fallback:** Use `addtest` command to manually add test cases by pasting from problem page
 - Test files are named: `in1.txt`, `out1.txt`, `in2.txt`, `out2.txt`, etc.
+
+### Quick setup (`cf get`) - recommended
+```bash
+cf get                   # listen; click Competitive Companion on any Codeforces page
+cf get 2194 [B]          # same, but opens that contest/problem page first (URLs work too)
+```
+Detects what was clicked from Competitive Companion's `batch.size`: 1 = problem/problemset page -> `Contests/2194B/`; more = contest page -> `Contests/2194/{A,B,...}`. Stops once the whole batch arrives, then cds there and opens Sublime Text. (Codeforces returns 403 to scripted page downloads, so samples always come via the extension.)
+
+### Submitting to Codeforces (`cf submit`)
+```bash
+cf submit A              # in a contest folder (/Contests/2278)
+cf submit                # inside a problem folder (/Contests/2278/A or /Contests/2194B)
+cf submit A -c 2278      # from anywhere
+```
+Codeforces blocks scripted submits, so this copies sol.cpp to the clipboard and opens the submit page in the browser; paste + Submit there. It then polls the public API (handle saved as `cf_handle` in config) and prints the verdict.
+
+## cf-helper Code Architecture
+
+Python package `cf-helper/cfhelper/`, Click-based. Installed editable (`pip install -e .`), so code edits take effect immediately; there is no test suite or linter.
+
+- Entry points (`setup.py`): `cf` → `cli.py` (groups `contest listen`, `problem listen`, `submit`), plus standalone `start` → `start.py`, `run` → `run.py`, `addtest` → `addtest.py`, `lc` → `leetcode.py`.
+- `config.py`: reads/writes `~/.cfhelper/config.yaml` (template path, base dir, compiler flags, `cf_handle`); every command resolves paths through it.
+- `listen.py` / `problem_listen.py`: near-duplicate HTTP servers on port 10043 receiving Competitive Companion JSON. Contest mode waits for a quiet period (5s) after the last problem; problem mode stops after ~3s. Changes to folder layout usually need editing both.
+- `run.py`: resolves the problem dir (arg / `-c` / cwd), compiles `sol.cpp`, diffs against `out*.txt` using `utils.normalize_output`.
+- `api.py`: Codeforces public API (used by `submit.py` to poll verdicts).
+- `leetcode.py` + `lc_runtime.h`: `lc` generates a `main` around the user's `class Solution` by including the runtime header, which parses LeetCode-format args.
 
 ## C++ Template System
 
@@ -301,3 +329,20 @@ lc submit                # submit sol.cpp, show verdict; offers to save the fail
 - Inputs use LeetCode format, one argument per line. Supports ints, doubles, bools, strings, chars, nested vectors, `ListNode*`, `TreeNode*`. Void methods print the modified first argument.
 - `ListNode`/`TreeNode` are defined by the runtime - keep them commented in sol.cpp.
 - Not supported: design problems (multiple methods), "any order" answers (compare by eye).
+
+## AtCoder Helper (`ac`)
+
+Part of cf-helper (`cfhelper/atcoder.py`; site differences for the listeners live in `cfhelper/sites.py`). Problems go in `Atcoder/<contest>/<LETTER>/` with `sol.cpp`, `in*/out*.txt` and `.ac.json` (contest + task ID); test them with the normal `run`.
+
+```bash
+ac login                 # once: paste the REVEL_SESSION cookie (login form has a CAPTCHA) -> ~/.cfhelper/atcoder.json
+ac get abc400            # fetch all samples without the browser (or `ac get abc400 c`, or a task URL)
+ac contest listen        # Competitive Companion on an AtCoder contest page
+ac problem listen        # one task page
+ac submit A              # in the contest folder (or `ac submit` in a problem folder, `-c abc400` from anywhere)
+```
+
+- `ac submit` posts the form with the saved cookie and polls `submissions/me` for the verdict. If AtCoder refuses the scripted submit, it copies `sol.cpp` and opens the submit page instead (like `cf submit`), then still shows the verdict.
+- Language: first `C++ ... gcc` option on the submit page; set `atcoder_language` in config to choose another. `atcoder_template_path` / `atcoder_dir` override the template and folder.
+- `ac get` never overwrites an existing `sol.cpp`; the listeners do (same as for Codeforces).
+- `cf`, `lc` and `ac` are zsh functions in `~/.zshrc` that wrap the real commands, so after setup the terminal `cd`s into the new folder (the tool writes the path to `$CFHELPER_CD_FILE`). Sublime Text opens via `utils.open_in_editor`. `go home` -> `/Users/saakethgunti`.

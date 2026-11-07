@@ -20,6 +20,7 @@ setup(
             'run=cfhelper.run:main',
             'addtest=cfhelper.addtest:main',
             'lc=cfhelper.leetcode:cli',
+            'ac=cfhelper.atcoder:cli',
         ],
     },
     python_requires='>=3.7',

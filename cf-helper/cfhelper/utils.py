@@ -47,3 +47,32 @@ def format_diff(expected: str, got: str) -> str:
     for line in got.split('\n'):
         result.append(f"    {line}")
     return '\n'.join(result)
+
+
+SUBLIME_CLI = '/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl'
+
+
+def open_in_editor(folder, files=()):
+    """Open folder in a new Sublime Text window with the given files; fall back to just the folder."""
+    import os, shutil, subprocess
+    if os.environ.get('CF_NO_OPEN') or os.environ.get('LC_NO_OPEN'):
+        return
+    cli = shutil.which('subl') or (SUBLIME_CLI if os.path.exists(SUBLIME_CLI) else None)
+    try:
+        if cli:
+            subprocess.run([cli, '-n', str(folder), *map(str, files)], check=False)
+        else:
+            subprocess.run(['open', '-a', 'Sublime Text', str(folder)], check=False)
+    except FileNotFoundError:
+        pass
+
+
+def request_cd(path):
+    """Ask the shell wrapper (see ~/.zshrc) to cd into path after the command exits."""
+    import os
+    target = os.environ.get('CFHELPER_CD_FILE')
+    if target:
+        with open(target, 'w') as f:
+            f.write(str(path))
+    else:
+        print(f'  cd "{path}"')

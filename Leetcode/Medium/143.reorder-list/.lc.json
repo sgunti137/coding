@@ -1,0 +1,21 @@
+{
+  "id": "143",
+  "question_id": "143",
+  "slug": "reorder-list",
+  "title": "Reorder List",
+  "meta": {
+    "name": "reorderList",
+    "params": [
+      {
+        "name": "head",
+        "type": "ListNode"
+      }
+    ],
+    "return": {
+      "type": "void"
+    },
+    "output": {
+      "paramindex": 0
+    }
+  }
+}

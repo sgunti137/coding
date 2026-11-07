@@ -1,0 +1,20 @@
+{
+  "id": "15",
+  "question_id": "15",
+  "slug": "3sum",
+  "title": "3Sum",
+  "meta": {
+    "name": "threeSum",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      }
+    ],
+    "return": {
+      "type": "list<list<integer>>",
+      "colsize": 3,
+      "dealloc": true
+    }
+  }
+}

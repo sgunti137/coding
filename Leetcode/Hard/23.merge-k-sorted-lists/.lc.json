@@ -1,0 +1,20 @@
+{
+  "id": "23",
+  "question_id": "23",
+  "slug": "merge-k-sorted-lists",
+  "title": "Merge k Sorted Lists",
+  "meta": {
+    "name": "mergeKLists",
+    "params": [
+      {
+        "name": "lists",
+        "type": "ListNode[]",
+        "dealloc": false
+      }
+    ],
+    "return": {
+      "type": "ListNode",
+      "dealloc": true
+    }
+  }
+}

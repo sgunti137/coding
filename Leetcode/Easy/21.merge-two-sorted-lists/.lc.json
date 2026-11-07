@@ -1,0 +1,25 @@
+{
+  "id": "21",
+  "question_id": "21",
+  "slug": "merge-two-sorted-lists",
+  "title": "Merge Two Sorted Lists",
+  "meta": {
+    "name": "mergeTwoLists",
+    "params": [
+      {
+        "name": "list1",
+        "type": "ListNode",
+        "dealloc": false
+      },
+      {
+        "name": "list2",
+        "type": "ListNode",
+        "dealloc": false
+      }
+    ],
+    "return": {
+      "type": "ListNode",
+      "dealloc": true
+    }
+  }
+}

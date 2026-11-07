@@ -1,0 +1,18 @@
+{
+  "id": "152",
+  "question_id": "152",
+  "slug": "maximum-product-subarray",
+  "title": "Maximum Product Subarray",
+  "meta": {
+    "name": "maxProduct",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    }
+  }
+}

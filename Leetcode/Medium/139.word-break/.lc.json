@@ -1,0 +1,22 @@
+{
+  "id": "139",
+  "question_id": "139",
+  "slug": "word-break",
+  "title": "Word Break",
+  "meta": {
+    "name": "wordBreak",
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "wordDict",
+        "type": "list<string>"
+      }
+    ],
+    "return": {
+      "type": "boolean"
+    }
+  }
+}

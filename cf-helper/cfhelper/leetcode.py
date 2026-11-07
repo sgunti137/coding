@@ -13,7 +13,7 @@ from pathlib import Path
 import click
 
 from .config import load_config
-from .utils import print_success, print_error, print_warning, print_info, format_diff
+from .utils import print_success, print_error, print_warning, print_info, format_diff, request_cd, open_in_editor
 
 GRAPHQL = 'https://leetcode.com/graphql'
 RUNTIME = Path(__file__).parent / 'lc_runtime.h'
@@ -135,12 +135,8 @@ def get(problem):
         print_success(f'{len(cases)} example test(s) saved')
 
     print_info(f"{q['questionFrontendId']}. {q['title']} ({q['difficulty']})")
-    print(f'cd "{folder}"')
-    try:
-        if not os.environ.get('LC_NO_OPEN'):
-            subprocess.run(['code', str(sol)], check=False)
-    except FileNotFoundError:
-        pass
+    request_cd(folder)
+    open_in_editor(folder, [sol])
 
 
 def norm(s):

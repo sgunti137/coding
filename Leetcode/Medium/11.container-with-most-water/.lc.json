@@ -1,0 +1,18 @@
+{
+  "id": "11",
+  "question_id": "11",
+  "slug": "container-with-most-water",
+  "title": "Container With Most Water",
+  "meta": {
+    "name": "maxArea",
+    "params": [
+      {
+        "name": "height",
+        "type": "integer[]"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "1385",
+  "question_id": "1486",
+  "slug": "find-the-distance-value-between-two-arrays",
+  "title": "Find the Distance Value Between Two Arrays",
+  "meta": {
+    "name": "findTheDistanceValue",
+    "params": [
+      {
+        "name": "arr1",
+        "type": "integer[]"
+      },
+      {
+        "type": "integer[]",
+        "name": "arr2"
+      },
+      {
+        "type": "integer",
+        "name": "d"
+      }
+    ],
+    "return": {
+      "type": "integer"
+    }
+  }
+}

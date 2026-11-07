@@ -1,0 +1,39 @@
+{
+  "id": "141",
+  "question_id": "141",
+  "slug": "linked-list-cycle",
+  "title": "Linked List Cycle",
+  "meta": {
+    "name": "hasCycle",
+    "params": [
+      {
+        "name": "head",
+        "type": "ListNode"
+      },
+      {
+        "name": "pos",
+        "type": "integer"
+      }
+    ],
+    "return": {
+      "type": "boolean"
+    },
+    "manual": true,
+    "languages": [
+      "cpp",
+      "java",
+      "python",
+      "c",
+      "csharp",
+      "javascript",
+      "ruby",
+      "swift",
+      "golang",
+      "python3",
+      "scala",
+      "kotlin",
+      "php",
+      "typescript"
+    ]
+  }
+}

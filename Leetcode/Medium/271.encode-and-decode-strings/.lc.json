@@ -1,0 +1,19 @@
+{
+  "id": "271",
+  "question_id": "271",
+  "slug": "encode-and-decode-strings",
+  "title": "Encode and Decode Strings",
+  "meta": {
+    "name": "encode",
+    "params": [
+      {
+        "name": "dummy_input",
+        "type": "list<string>"
+      }
+    ],
+    "return": {
+      "type": "list<string>"
+    },
+    "manual": true
+  }
+}
